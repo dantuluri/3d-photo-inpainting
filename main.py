@@ -25,6 +25,12 @@ import vispy
 vispy.use(app='egl')
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--expid', type=str, ,help='experiment id')
+pathway_folder = expid
+mesh_folder = pathway_folder+"/mesh"
+video_folder = pathway_folder+"/video"
+depth_folder = pathway_folder+"/depth"
+src_folder = pathway_folder+"/image"
 parser.add_argument('--config', type=str, default='argument.yml',help='Configure of post processing')
 args = parser.parse_args()
 config = yaml.load(open(args.config, 'r'))
@@ -43,16 +49,25 @@ else:
 
 print(f"running on device {device}")
 
+print("got config")
+
+if isinstance(config["gpu_ids"], int) and (config["gpu_ids"] >= 0):
+    device = config["gpu_ids"]
+else:
+    device = "cpu"
+
+print(f"running on device {device}")
+
 for idx in tqdm(range(len(sample_list))):
     depth = None
     sample = sample_list[idx]
     print("Current Source ==> ", sample['src_pair_name'])
-    mesh_fi = os.path.join(config['mesh_folder'], sample['src_pair_name'] +'.ply')
+    mesh_fi = os.path.join(mesh_folder, sample['src_pair_name'] +'.ply')
     image = imageio.imread(sample['ref_img_fi'])
 
     print(f"Running depth extraction at {time.time()}")
 
-    run_depth([sample['ref_img_fi']], config['src_folder'], config['depth_folder'],
+    run_depth([sample['ref_img_fi']], src_folder, depth_folder,
               config['MiDaS_model_ckpt'], MonoDepthNet, MiDaS_utils, target_w=640)
     config['output_h'], config['output_w'] = np.load(sample['depth_fi']).shape[:2]
     frac = config['longer_side_len'] / max(config['output_h'], config['output_w'])
@@ -130,6 +145,10 @@ for idx in tqdm(range(len(sample_list))):
     down, right = top + config['output_h'], left + config['output_w']
     border = [int(xx) for xx in [top, down, left, right]]
     normal_canvas, all_canvas = output_3d_photo(verts.copy(), colors.copy(), faces.copy(), copy.deepcopy(Height), copy.deepcopy(Width), copy.deepcopy(hFov), copy.deepcopy(vFov),
-                        copy.deepcopy(sample['tgt_pose']), sample['video_postfix'], copy.deepcopy(sample['ref_pose']), copy.deepcopy(config['video_folder']),
+                        copy.deepcopy(sample['tgt_pose']), sample['video_postfix'], copy.deepcopy(sample['ref_pose']), copy.deepcopy(video_folder),
                         image.copy(), copy.deepcopy(sample['int_mtx']), config, image,
                         videos_poses, video_basename, config.get('original_h'), config.get('original_w'), border=border, depth=depth, normal_canvas=normal_canvas, all_canvas=all_canvas)
+
+
+
+
