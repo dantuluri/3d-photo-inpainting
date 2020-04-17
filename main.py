@@ -25,14 +25,16 @@ import vispy
 vispy.use(app='egl')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--expid', type=str, ,help='experiment id')
-pathway_folder = expid
+parser.add_argument('--expid', type=str,help='experiment id')
+parser.add_argument('--config', type=str, default='argument.yml',help='Configure of post processing')
+args = parser.parse_args()
+
+pathway_folder = args.expid
 mesh_folder = pathway_folder+"/mesh"
 video_folder = pathway_folder+"/video"
 depth_folder = pathway_folder+"/depth"
 src_folder = pathway_folder+"/image"
-parser.add_argument('--config', type=str, default='argument.yml',help='Configure of post processing')
-args = parser.parse_args()
+
 config = yaml.load(open(args.config, 'r'))
 if config['offscreen_rendering'] is True:
     vispy.use(app='egl')
